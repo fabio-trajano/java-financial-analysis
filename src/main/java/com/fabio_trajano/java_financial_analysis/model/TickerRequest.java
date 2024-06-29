@@ -1,9 +1,7 @@
 package com.fabio_trajano.java_financial_analysis.model;
 
 
-import lombok.Data;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
