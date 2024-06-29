@@ -1,6 +1,7 @@
 package com.fabio_trajano.java_financial_analysis.service;
 
 
+import com.fabio_trajano.java_financial_analysis.DTO.DividendsResponseDTO;
 import com.fabio_trajano.java_financial_analysis.DTO.EarningsResponseDTO;
 import com.fabio_trajano.java_financial_analysis.DTO.StockResponseDTO;
 import com.fabio_trajano.java_financial_analysis.model.TickerRequest;
@@ -69,6 +70,34 @@ public class StockDataFetchService {
             return Arrays.stream(earningsResponseDTOS)
                     .filter(dto -> LocalDate.parse(dto.date(), formatter).isAfter(oneYearAgo))
                     .mapToDouble(dto -> Double.parseDouble(dto.actualEarningResult()))
+                    .sum();
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public Double dividends(TickerRequest ticker) {
+
+        String earningsUrl = "https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/" + ticker.getTicker() + "?apikey=" +apiKey;
+
+        Mono<String> responseMono = webClient.get()
+                .uri(earningsUrl)
+                .retrieve()
+                .bodyToMono(String.class);
+
+        String response = responseMono.block();
+
+        try {
+
+            DividendsResponseDTO[] dividendsResponseDTOS = objectMapper.readValue(response, DividendsResponseDTO[].class);
+
+            LocalDate oneYearAgo = LocalDate.now().minusYears(1);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+            return Arrays.stream(dividendsResponseDTOS)
+                    .filter(dto -> LocalDate.parse(dto.date(), formatter).isAfter(oneYearAgo))
+                    .mapToDouble(dto -> Double.parseDouble(dto.dividend()))
                     .sum();
 
         } catch (JsonProcessingException e) {
