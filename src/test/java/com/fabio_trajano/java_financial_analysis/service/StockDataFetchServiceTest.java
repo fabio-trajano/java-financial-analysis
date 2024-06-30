@@ -45,4 +45,15 @@ public class StockDataFetchServiceTest {
         assertNotNull(earnings, "Earnings should not be null");
     }
 
+    @Test
+    public void testDividens_validTicker_returnsDividends() throws Exception {
+        String ticker = "AAPL";
+        TickerRequest tickerRequest = new TickerRequest(ticker);
+
+        Double dividends = stockDataFetchService.dividends(tickerRequest);
+        System.out.println("Dividends in the last year: " + dividends.toString());
+
+        assertNotNull(dividends, "Earnings should not be null");
+    }
+
 }

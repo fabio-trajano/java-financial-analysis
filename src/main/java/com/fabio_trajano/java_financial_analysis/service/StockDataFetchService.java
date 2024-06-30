@@ -15,6 +15,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.List;
 
 @Service
 public class StockDataFetchService {
@@ -37,7 +38,7 @@ public class StockDataFetchService {
         Mono<String> responseMono = webClient.get()
                 .uri(priceUrl)
                 .retrieve()
-                .bodyToMono(String.class);;
+                .bodyToMono(String.class);
 
         String response = responseMono.block();
 
@@ -89,16 +90,18 @@ public class StockDataFetchService {
         String response = responseMono.block();
 
         try {
-
-            DividendsResponseDTO[] dividendsResponseDTOS = objectMapper.readValue(response, DividendsResponseDTO[].class);
+            DividendsResponseDTO dividendsResponseDTO = objectMapper.readValue(response, DividendsResponseDTO.class);
 
             LocalDate oneYearAgo = LocalDate.now().minusYears(1);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-            return Arrays.stream(dividendsResponseDTOS)
-                    .filter(dto -> LocalDate.parse(dto.date(), formatter).isAfter(oneYearAgo))
-                    .mapToDouble(dto -> Double.parseDouble(dto.dividend()))
+            List<DividendsResponseDTO.DividendHistory> historical = dividendsResponseDTO.historical();
+
+            return historical.stream()
+                    .filter(history -> LocalDate.parse(history.date(), formatter).isAfter(oneYearAgo))
+                    .mapToDouble(DividendsResponseDTO.DividendHistory::dividend)
                     .sum();
+
 
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

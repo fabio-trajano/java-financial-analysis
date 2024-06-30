@@ -1,10 +1,17 @@
 package com.fabio_trajano.java_financial_analysis.DTO;
 
-public record DividendsResponseDTO(String date,
-                                   String label,
-                                   String adjDividend,
-                                   String dividend,
-                                   String recordDate,
-                                   String paymentDate,
-                                   String DeclarationDate) {
+
+import java.util.List;
+
+public record DividendsResponseDTO(String symbol, List<DividendHistory> historical) {
+
+    public record DividendHistory(
+            String date,
+            String label,
+            Double adjDividend,
+            Double dividend,
+            String recordDate,
+            String paymentDate,
+            String declarationDate
+    ) {}
 }
