@@ -50,7 +50,7 @@ public class StockDataFetchServiceTest {
         String ticker = "AAPL";
         TickerRequest tickerRequest = new TickerRequest(ticker);
 
-        Double dividends = stockDataFetchService.dividends(tickerRequest);
+        Double dividends = stockDataFetchService.annualDividend(tickerRequest);
         System.out.println("Dividends in the last year: " + dividends.toString());
 
         assertNotNull(dividends, "Earnings should not be null");

@@ -1,9 +1,10 @@
 package com.fabio_trajano.java_financial_analysis.service;
 
 
-import com.fabio_trajano.java_financial_analysis.DTO.DividendsResponseDTO;
-import com.fabio_trajano.java_financial_analysis.DTO.EarningsResponseDTO;
-import com.fabio_trajano.java_financial_analysis.DTO.StockResponseDTO;
+import com.fabio_trajano.java_financial_analysis.dto.DividendsResponseDTO;
+import com.fabio_trajano.java_financial_analysis.dto.EarningsResponseDTO;
+import com.fabio_trajano.java_financial_analysis.dto.IncomeResponseDTO;
+import com.fabio_trajano.java_financial_analysis.dto.StockResponseDTO;
 import com.fabio_trajano.java_financial_analysis.model.TickerRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -78,9 +79,9 @@ public class StockDataFetchService {
         }
     }
 
-    public Double dividends(TickerRequest ticker) {
+    public Double annualDividend(TickerRequest ticker) {
 
-        String earningsUrl = "https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/" + ticker.getTicker() + "?apikey=" +apiKey;
+        String earningsUrl = "https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/" + ticker.getTicker() + "?apikey=" + apiKey;
 
         Mono<String> responseMono = webClient.get()
                 .uri(earningsUrl)
@@ -107,6 +108,23 @@ public class StockDataFetchService {
             throw new RuntimeException(e);
         }
     }
+    public Long annualIncome(TickerRequest ticker) {
 
+        String financialsUrl = "https://financialmodelingprep.com/api/v3/income-statement/" + ticker.getTicker() + "?period=annual&apikey=" + apiKey;
+
+        Mono<String> responseMono = webClient.get()
+                .uri(financialsUrl)
+                .retrieve()
+                .bodyToMono(String.class);
+
+        String response = responseMono.block();
+
+        try {
+            IncomeResponseDTO[] income = objectMapper.readValue(response, IncomeResponseDTO[].class);
+            return income[1].netIncome();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
 

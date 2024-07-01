@@ -1,4 +1,4 @@
-package com.fabio_trajano.java_financial_analysis.DTO;
+package com.fabio_trajano.java_financial_analysis.dto;
 
 
 import java.util.List;
