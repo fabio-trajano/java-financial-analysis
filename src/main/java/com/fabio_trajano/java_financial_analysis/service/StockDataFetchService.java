@@ -1,10 +1,7 @@
 package com.fabio_trajano.java_financial_analysis.service;
 
 
-import com.fabio_trajano.java_financial_analysis.dto.DividendsResponseDTO;
-import com.fabio_trajano.java_financial_analysis.dto.EarningsResponseDTO;
-import com.fabio_trajano.java_financial_analysis.dto.IncomeResponseDTO;
-import com.fabio_trajano.java_financial_analysis.dto.StockResponseDTO;
+import com.fabio_trajano.java_financial_analysis.dto.*;
 import com.fabio_trajano.java_financial_analysis.model.TickerRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,6 +21,8 @@ public class StockDataFetchService {
     @Value("${fmp.apikey}")
     private String apiKey;
 
+    private final String baseUrl = "https://financialmodelingprep.com/api/v3/key-metrics/";
+
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
 
@@ -32,7 +31,7 @@ public class StockDataFetchService {
         this.objectMapper = objectMapper;
     }
 
-    public Double price(TickerRequest ticker) {
+    public StockResponseDTO stockPrice(TickerRequest ticker) {
 
         String priceUrl = "https://financialmodelingprep.com/api/v3/quote-short/" + ticker.getTicker() + "?apikey=" + apiKey;
 
@@ -45,7 +44,7 @@ public class StockDataFetchService {
 
         try {
             StockResponseDTO[] stockResponseDTOs = objectMapper.readValue(response, StockResponseDTO[].class);
-            return stockResponseDTOs[0].price();
+            return stockResponseDTOs[0];
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -53,7 +52,7 @@ public class StockDataFetchService {
 
     public Double earningsPerShare(TickerRequest ticker) {
 
-        String earningsUrl = "https://financialmodelingprep.com/api/v3/earnings-surprises/" + ticker.getTicker() + "?apikey=" +apiKey;
+        String earningsUrl = baseUrl + ticker.getTicker() + "?apikey=" +apiKey;
 
         Mono<String> responseMono = webClient.get()
                 .uri(earningsUrl)
@@ -81,7 +80,7 @@ public class StockDataFetchService {
 
     public Double annualDividend(TickerRequest ticker) {
 
-        String earningsUrl = "https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/" + ticker.getTicker() + "?apikey=" + apiKey;
+        String earningsUrl = baseUrl + "historical-price-full/stock_dividend/" + ticker.getTicker() + "?apikey=" + apiKey;
 
         Mono<String> responseMono = webClient.get()
                 .uri(earningsUrl)
@@ -108,9 +107,9 @@ public class StockDataFetchService {
             throw new RuntimeException(e);
         }
     }
-    public Long annualIncome(TickerRequest ticker) {
+    public IncomeResponseDTO annualIncome(TickerRequest ticker) {
 
-        String financialsUrl = "https://financialmodelingprep.com/api/v3/income-statement/" + ticker.getTicker() + "?period=annual&apikey=" + apiKey;
+        String financialsUrl = baseUrl + "income-statement/" + ticker.getTicker() + "?period=annual&apikey=" + apiKey;
 
         Mono<String> responseMono = webClient.get()
                 .uri(financialsUrl)
@@ -121,7 +120,25 @@ public class StockDataFetchService {
 
         try {
             IncomeResponseDTO[] income = objectMapper.readValue(response, IncomeResponseDTO[].class);
-            return income[1].netIncome();
+            return income[1];
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public MetricsDTO metricsDTO(TickerRequest ticker) {
+
+        String metricsUrl = baseUrl + "key-metrics/" + ticker.getTicker() + "?period=annual&apikey=" + apiKey;
+
+        Mono<String> responseMono = webClient.get()
+                .uri(metricsUrl)
+                .retrieve()
+                .bodyToMono(String.class);
+
+        String response = responseMono.block();
+
+        try {
+            return objectMapper.readValue(response, MetricsDTO.class);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

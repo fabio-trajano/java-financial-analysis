@@ -7,7 +7,5 @@ public record StockData(
         double revenue,
         double netIncome,
         double earning,
-        double shareholdersEquity,
-        long marketCap,
         StockMetrics metrics
 )  {}
