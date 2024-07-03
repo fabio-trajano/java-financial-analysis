@@ -1,6 +1,5 @@
 package com.fabio_trajano.java_financial_analysis.service;
 
-
 import com.fabio_trajano.java_financial_analysis.dto.*;
 import com.fabio_trajano.java_financial_analysis.model.TickerRequest;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -18,9 +17,11 @@ import java.util.List;
 @Service
 public class StockDataFetchService {
 
-    private String apiKey = "EoDrjwbXL51n8chJFd1rqPEGrUwyrzom";
+    @Value("${fmp.apikey}")
+    private String apiKey;
 
-    private final String baseUrl = "https://financialmodelingprep.com/api/v3/";
+    @Value("${fpm.baseurl}")
+    private String baseUrl;
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
@@ -31,112 +32,63 @@ public class StockDataFetchService {
     }
 
     public StockResponseDTO stockPrice(TickerRequest ticker) {
-
         String priceUrl = baseUrl + "quote-short/" + ticker.getTicker() + "?apikey=" + apiKey;
-        System.out.println(priceUrl);
-
-        Mono<String> responseMono = webClient.get()
-                .uri(priceUrl)
-                .retrieve()
-                .bodyToMono(String.class);
-
-        String response = responseMono.block();
-
+        String response = fetchData(priceUrl);
         try {
             StockResponseDTO[] stockResponseDTOs = objectMapper.readValue(response, StockResponseDTO[].class);
             return stockResponseDTOs[0];
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error processing stock price data", e);
         }
     }
 
     public Double earningsPerShare(TickerRequest ticker) {
-
-        String earningsUrl = baseUrl + "earnings-surprises/" + ticker.getTicker() + "?apikey=" +apiKey;
-        System.out.println(earningsUrl);
-        Mono<String> responseMono = webClient.get()
-                .uri(earningsUrl)
-                .retrieve()
-                .bodyToMono(String.class);
-
-        String response = responseMono.block();
-
+        String earningsUrl = baseUrl + "earnings-surprises/" + ticker.getTicker() + "?apikey=" + apiKey;
+        String response = fetchData(earningsUrl);
         try {
-
-            EarningsResponseDTO[] earningsResponseDTOS = objectMapper.readValue(response, EarningsResponseDTO[].class);
-
+            EarningsResponseDTO[] earningsResponseDTOs = objectMapper.readValue(response, EarningsResponseDTO[].class);
             LocalDate oneYearAgo = LocalDate.now().minusYears(1);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-            return Arrays.stream(earningsResponseDTOS)
+            return Arrays.stream(earningsResponseDTOs)
                     .filter(dto -> LocalDate.parse(dto.date(), formatter).isAfter(oneYearAgo))
                     .mapToDouble(dto -> Double.parseDouble(dto.actualEarningResult()))
                     .sum();
-
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error processing earnings data", e);
         }
     }
 
     public Double annualDividend(TickerRequest ticker) {
-
-        String earningsUrl = baseUrl + "historical-price-full/stock_dividend/" + ticker.getTicker() + "?apikey=" + apiKey;
-        System.out.println(earningsUrl);
-        Mono<String> responseMono = webClient.get()
-                .uri(earningsUrl)
-                .retrieve()
-                .bodyToMono(String.class);
-
-        String response = responseMono.block();
-
+        String dividendUrl = baseUrl + "historical-price-full/stock_dividend/" + ticker.getTicker() + "?apikey=" + apiKey;
+        String response = fetchData(dividendUrl);
         try {
             DividendsResponseDTO dividendsResponseDTO = objectMapper.readValue(response, DividendsResponseDTO.class);
-
             LocalDate oneYearAgo = LocalDate.now().minusYears(1);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
             List<DividendsResponseDTO.DividendHistory> historical = dividendsResponseDTO.historical();
-
             return historical.stream()
                     .filter(history -> LocalDate.parse(history.date(), formatter).isAfter(oneYearAgo))
                     .mapToDouble(DividendsResponseDTO.DividendHistory::dividend)
                     .sum();
-
-
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error processing dividend data", e);
         }
     }
+
     public IncomeResponseDTO annualIncome(TickerRequest ticker) {
-
         String financialsUrl = baseUrl + "income-statement/" + ticker.getTicker() + "?period=annual&apikey=" + apiKey;
-
-        Mono<String> responseMono = webClient.get()
-                .uri(financialsUrl)
-                .retrieve()
-                .bodyToMono(String.class);
-
-        String response = responseMono.block();
-
+        String response = fetchData(financialsUrl);
         try {
             IncomeResponseDTO[] income = objectMapper.readValue(response, IncomeResponseDTO[].class);
             return income[1];
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error processing income data", e);
         }
     }
 
     public MetricsDTO metricsDTO(TickerRequest ticker) {
-
         String metricsUrl = baseUrl + "key-metrics/" + ticker.getTicker() + "?period=annual&apikey=" + apiKey;
-        System.out.println(metricsUrl);
-        Mono<String> responseMono = webClient.get()
-                .uri(metricsUrl)
-                .retrieve()
-                .bodyToMono(String.class);
-
-        String response = responseMono.block();
-
+        String response = fetchData(metricsUrl);
         try {
             MetricsDTO[] metricsDTOArray = objectMapper.readValue(response, MetricsDTO[].class);
             if (metricsDTOArray.length > 0) {
@@ -145,8 +97,16 @@ public class StockDataFetchService {
                 throw new RuntimeException("No metrics data available for " + ticker.getTicker());
             }
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(metricsUrl, e);
+            throw new RuntimeException("Error processing metrics data", e);
         }
     }
-}
 
+    private String fetchData(String url) {
+        System.out.println("Fetching data from: " + url);
+        return webClient.get()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+    }
+}
