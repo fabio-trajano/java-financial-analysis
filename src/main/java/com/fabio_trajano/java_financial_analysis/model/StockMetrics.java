@@ -1,5 +1,8 @@
 package com.fabio_trajano.java_financial_analysis.model;
 
+import lombok.Data;
+
+@Data
 public class StockMetrics {
 
     private double revenuePerShare;

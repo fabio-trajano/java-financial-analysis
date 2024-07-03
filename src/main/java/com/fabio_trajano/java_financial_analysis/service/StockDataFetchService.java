@@ -18,10 +18,9 @@ import java.util.List;
 @Service
 public class StockDataFetchService {
 
-    @Value("${fmp.apikey}")
-    private String apiKey;
+    private String apiKey = "EoDrjwbXL51n8chJFd1rqPEGrUwyrzom";
 
-    private final String baseUrl = "https://financialmodelingprep.com/api/v3/key-metrics/";
+    private final String baseUrl = "https://financialmodelingprep.com/api/v3/";
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
@@ -33,7 +32,8 @@ public class StockDataFetchService {
 
     public StockResponseDTO stockPrice(TickerRequest ticker) {
 
-        String priceUrl = "https://financialmodelingprep.com/api/v3/quote-short/" + ticker.getTicker() + "?apikey=" + apiKey;
+        String priceUrl = baseUrl + "quote-short/" + ticker.getTicker() + "?apikey=" + apiKey;
+        System.out.println(priceUrl);
 
         Mono<String> responseMono = webClient.get()
                 .uri(priceUrl)
@@ -52,8 +52,8 @@ public class StockDataFetchService {
 
     public Double earningsPerShare(TickerRequest ticker) {
 
-        String earningsUrl = baseUrl + ticker.getTicker() + "?apikey=" +apiKey;
-
+        String earningsUrl = baseUrl + "earnings-surprises/" + ticker.getTicker() + "?apikey=" +apiKey;
+        System.out.println(earningsUrl);
         Mono<String> responseMono = webClient.get()
                 .uri(earningsUrl)
                 .retrieve()
@@ -81,7 +81,7 @@ public class StockDataFetchService {
     public Double annualDividend(TickerRequest ticker) {
 
         String earningsUrl = baseUrl + "historical-price-full/stock_dividend/" + ticker.getTicker() + "?apikey=" + apiKey;
-
+        System.out.println(earningsUrl);
         Mono<String> responseMono = webClient.get()
                 .uri(earningsUrl)
                 .retrieve()
@@ -129,7 +129,7 @@ public class StockDataFetchService {
     public MetricsDTO metricsDTO(TickerRequest ticker) {
 
         String metricsUrl = baseUrl + "key-metrics/" + ticker.getTicker() + "?period=annual&apikey=" + apiKey;
-
+        System.out.println(metricsUrl);
         Mono<String> responseMono = webClient.get()
                 .uri(metricsUrl)
                 .retrieve()
@@ -138,9 +138,14 @@ public class StockDataFetchService {
         String response = responseMono.block();
 
         try {
-            return objectMapper.readValue(response, MetricsDTO.class);
+            MetricsDTO[] metricsDTOArray = objectMapper.readValue(response, MetricsDTO[].class);
+            if (metricsDTOArray.length > 0) {
+                return metricsDTOArray[0];
+            } else {
+                throw new RuntimeException("No metrics data available for " + ticker.getTicker());
+            }
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException(metricsUrl, e);
         }
     }
 }

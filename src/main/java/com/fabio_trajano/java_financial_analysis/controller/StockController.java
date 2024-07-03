@@ -8,6 +8,7 @@ import com.fabio_trajano.java_financial_analysis.model.StockMetrics;
 import com.fabio_trajano.java_financial_analysis.model.TickerRequest;
 import com.fabio_trajano.java_financial_analysis.service.StockDataFetchService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,7 +22,7 @@ public class StockController {
     private StockDataFetchService stockService;
     private StockData stock;
 
-    @GetMapping("/{ticker}")
+    @GetMapping(value = "/{ticker}", produces = MediaType.APPLICATION_JSON_VALUE)
     public StockData getStockData(@PathVariable String ticker) {
         TickerRequest tickerRequest = new TickerRequest(ticker);
 
@@ -41,7 +42,7 @@ public class StockController {
         );
     }
 
-    @GetMapping("/{ticker}/metrics")
+    @GetMapping(value = "/{ticker}/metrics", produces = MediaType.APPLICATION_JSON_VALUE)
     public StockMetrics getStockMetrics(@PathVariable String ticker) {
         TickerRequest tickerRequest = new TickerRequest(ticker);
         MetricsDTO metricsDTO = stockService.metricsDTO(tickerRequest);
@@ -58,7 +59,7 @@ public class StockController {
         );
     }
 
-    @GetMapping("/{ticker}/full")
+    @GetMapping(value = "/{ticker}/full", produces = MediaType.APPLICATION_JSON_VALUE)
     public StockData getFullStockData(@PathVariable String ticker) {
         StockData basicData = getStockData(ticker);
         StockMetrics metrics = getStockMetrics(ticker);
