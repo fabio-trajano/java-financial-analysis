@@ -7,7 +7,6 @@ import com.fabio_trajano.java_financial_analysis.model.StockData;
 import com.fabio_trajano.java_financial_analysis.model.StockMetrics;
 import com.fabio_trajano.java_financial_analysis.model.TickerRequest;
 import com.fabio_trajano.java_financial_analysis.service.StockDataFetchService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,14 +17,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/stock")
 public class StockController {
 
-    @Autowired
-    private StockDataFetchService stockService;
-    private StockData stock;
+    private final StockDataFetchService stockService;
+
+    public StockController(StockDataFetchService stockService) {
+        this.stockService = stockService;
+    }
 
     @GetMapping(value = "/{ticker}", produces = MediaType.APPLICATION_JSON_VALUE)
     public StockData getStockData(@PathVariable String ticker) {
         TickerRequest tickerRequest = new TickerRequest(ticker);
-
         StockResponseDTO stockInfo = stockService.stockPrice(tickerRequest);
         IncomeResponseDTO incomeResponse = stockService.annualIncome(tickerRequest);
         Double earnings = stockService.earningsPerShare(tickerRequest);
@@ -46,6 +46,7 @@ public class StockController {
     public StockMetrics getStockMetrics(@PathVariable String ticker) {
         TickerRequest tickerRequest = new TickerRequest(ticker);
         MetricsDTO metricsDTO = stockService.metricsDTO(tickerRequest);
+
         return new StockMetrics(
                 metricsDTO.revenuePerShare(),
                 metricsDTO.netIncomePerShare(),
