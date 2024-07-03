@@ -38,6 +38,7 @@ public class StockController {
                 incomeResponse.revenue(),
                 incomeResponse.netIncome(),
                 earnings,
+                dividends,
                 null
         );
     }
@@ -72,6 +73,7 @@ public class StockController {
                 basicData.revenue(),
                 basicData.netIncome(),
                 basicData.earning(),
+                basicData.dividends(),
                 metrics
         );
     }
